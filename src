@@ -1,0 +1,38 @@
+@Controller
+class WigController {
+
+    @GetMapping("/")
+    public String home(Model model) {
+        List<Wig> wigs = new ArrayList<>();
+        wigs.add(new Wig("https://cdn.pixabay.com/photo/2016/06/08/12/26/wigs-1447868_960_720.jpg", "Long curly blonde wig", 49.99));
+        wigs.add(new Wig("https://cdn.pixabay.com/photo/2017/05/31/15/45/wig-2368398_960_720.jpg", "Short black bob wig", 29.99));
+        wigs.add(new Wig("https://cdn.pixabay.com/photo/2017/07/24/11/53/woman-2532238_960_720.jpg", "Medium length brown wig", 39.99));
+        wigs.add(new Wig("https://cdn.pixabay.com/photo/2016/08/08/09/14/wigs-1576205_960_720.jpg", "Long straight red wig", 59.99));
+
+        for (Wig wig : wigs) {
+            String url = wig.getImageUrl();
+            try {
+                JsonNode response = Unirest.get("https://api.cognitive.microsoft.com/bing/v7.0/images/search")
+                        .header("Ocp-Apim-Subscription-Key", "YOUR_API_KEY_HERE")
+                        .queryString("q", "wig")
+                        .queryString("count", 1)
+                        .queryString("offset", 0)
+                        .queryString("mkt", "en-US")
+                        .queryString("safeSearch", "Moderate")
+                        .asJson()
+                        .getBody();
+
+                JsonNode firstResult = response.get("value").get(0);
+                String imageUrl = firstResult.get("thumbnailUrl").asText();
+                wig.setImageUrl(imageUrl);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        model.addAttribute("wigs", wigs);
+
+        return "home";
+    }
+}
+
